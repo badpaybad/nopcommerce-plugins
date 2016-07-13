@@ -1,0 +1,8 @@
+﻿Group: badpaybad.info
+FriendlyName: Roxy file manager
+SystemName: Nop.Plugin.BadPayBad.FileUploadManager.BadPayBadFileUploadManagerPlugin
+Version: 1.42
+SupportedVersions: 3.70
+Author: badpaybad.info
+DisplayOrder: 1
+FileName: Nop.Plugin.BadPayBad.FileUploadManager.dll
