@@ -1,0 +1,41 @@
+﻿@model Nop.Plugin.BadPayBad.EditContentInFrontEnd.EditContentInFrontEndModel
+
+@if (Model.HasAdminAccess && !string.IsNullOrEmpty(Model.UrlToEdit))
+{
+    <style>
+        .ui-dialog {
+            width: 1024px !important;
+        }
+        .tool-extens {
+            background-color: #000;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+            padding: 3px;
+        }
+    </style>
+    <div class="tool-extens">
+        <a href="javascript:void(0)" onclick="openDialog('@Model.UrlToEdit')">Quick Edit</a>
+    </div>
+          <div id="dialogruleguide" style="display: none; overflow: scroll; width: 1024px!important;">
+        <iframe id="myIframe" src=""
+                frameborder="0" style="height: 800px; width: 100%; top: 0px; left: 0px; right: 0px; bottom: 0px" height="800" width="100%"></iframe>
+    </div>
+
+    <script>
+        function openDialog(url) {
+
+            $("#dialogruleguide").dialog({
+                autoOpen: true,
+                modal: true,
+                height: 800,
+                width: '1024px!important',
+                open: function(ev, ui) {
+                    $('#myIframe').attr('src', url);
+                }
+            });
+        }
+
+
+    </script>
+}

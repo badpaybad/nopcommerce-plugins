@@ -1,0 +1,191 @@
+﻿@using System.Web.Script.Serialization
+@model Nop.Plugin.BadPayBad.ProductLiveChat.ProductListCommentModel
+<link href="~/Plugins/BadPayBad.ProductLiveChat/style.css" rel="stylesheet"/>
+<script src="~/Plugins/BadPayBad.ProductLiveChat/jquery.signalR-2.2.0.min.js"></script>
+<script src="~/signalr/hubs"></script>
+
+<div class="product-comment-live-chat">
+    <script>
+        var _liveAnnouHub = $.connection.liveProductAnnoucementHub;
+
+        var _subcriber = 'productSubcriber_@(Model.Username + "_" + Model.ProductId)';
+        var _listChannelKey = [];
+    </script>
+
+    <div id="newProductComment">
+        <h4>Live comment</h4>
+        <table id="commentBox">
+            <tr>
+                <td>
+                    <textarea id="txtNewComment"></textarea>
+                </td>
+                <td>
+                    <input type="button" value="Post comment"
+                           onclick="DoComment('@Model.ProductId', 'txtNewComment')"/>
+                </td>
+            </tr>
+        </table>
+        <div class="replies" id="repliesBox" style="display: none">
+            <div class="comment" id="currentProductComment"></div>
+            <div class="reply-list" id="newCommentReplies"></div>
+
+            <table class="reply-box">
+                <tr>
+                    <td>
+                        <input type="hidden" id="hdfNewCommentId" value="0"/>
+                        <textarea id="txtNewCommentReply" rows="3"></textarea>
+                    </td>
+                    <td>
+                        <input type="button" value="Post reply"
+                               onclick="DoReply(jQuery('#hdfNewCommentId').val(), '@Model.ProductId', 'txtNewCommentReply')"/>
+
+                    </td>
+                </tr>
+
+            </table>
+
+        </div>
+
+        <script>
+
+            function DoComment(productId, txtCommentDomId) {
+                var comment = $('#' + txtCommentDomId).val();
+                if (comment == '') return;
+
+                jQuery('#currentProductComment').html(
+                    '<div  class="reply-item">'
+                    + '<div class="reply-item-username">' + '@Model.Username' + ' ' + new Date() + '</div>'
+                    + '<div class="reply-item-comment">' + comment
+                    + '</div></div>'
+                );
+
+                var dataComment = { ProductId: productId, Comment: comment, Username: '@Model.Username' };
+
+                $.ajax({
+                    method: "POST",
+                    url: "/ProductCommentLiveChat/AddComment",
+                    cache: false,
+                    // dataType: "json",
+                    data: dataComment
+                }).done(function(res) {
+                    var commentId = res + '';
+                    jQuery('#newProductComment .reply-list').attr('id', 'commentChannelKey_' + commentId);
+                    jQuery('#hdfNewCommentId').attr('value', commentId);
+                    _liveAnnouHub.server.registerChat(_subcriber, 'commentChannelKey_' + commentId);
+                    $('#' + txtCommentDomId).val('');
+                    $('#commentBox').hide();
+                    $('#repliesBox').show();
+                });
+            }
+
+            function DoReply(commentId, productId, txtReplyDomId) {
+
+                if (commentId == null || !commentId) {
+                    commentId = jQuery('#hdfNewCommentId').val();
+                }
+
+                var comment = $('#' + txtReplyDomId).val();
+                if (comment == '')return;
+
+                var dataComment = { ProductId: productId, Comment: comment, ParentId: commentId, Username: '@Model.Username' };
+
+                $.ajax({
+                    method: "POST",
+                    url: "/ProductCommentLiveChat/AddReply",
+                    cache: false,
+                    //dataType: "json",
+                    data: dataComment
+                }).done(function(res) {
+                    $('#' + txtReplyDomId).val('');
+                });
+            }
+
+        </script>
+    </div>
+
+    <div>
+        @foreach (var itm in Model.Comments)
+        {
+            <div>
+                <div class="comment">
+                    <div class="reply-item-username">@itm.Username @itm.CreatedDate</div>
+                    <div class="reply-item-comment">
+                        @itm.Comment
+                    </div>
+                </div>
+                <div class="reply-list" id="commentChannelKey_@itm.Id">
+                    @foreach (var r in itm.Replies)
+                    {
+                        <div class="reply-item">
+                            <div class="reply-item-username">@r.Username @r.CreatedDate</div>
+                            <div class="reply-item-comment">
+                                @r.Comment
+                            </div>
+                        </div>
+                    }
+                </div>
+                <table class="reply-box">
+                    <tr>
+                        <td>
+                            <textarea id="txtNewCommentReply_@itm.Id" rows="3"></textarea>
+                        </td>
+                        <td>
+                            <input type="button" value="Post reply"
+                                   onclick="DoReply('@itm.Id', '@Model.ProductId', 'txtNewCommentReply_@itm.Id')" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        }
+    </div>
+
+    <script>
+        @for (var i = 0; i < Model.Comments.Count; i++)
+        {
+            <text>_listChannelKey[@i] = '@Model.Comments[i].CommentChannelKey'</text>
+        }
+
+    function BuildReplyItem(pc) {
+        return '<div  class="reply-item">'
+            + '<div class="reply-item-username">' + pc.Username + ' ' + new Date(parseInt(pc.CreatedDate.substr(6))) + '</div>'
+            + '<div class="reply-item-comment">' + pc.Comment
+            + '</div></div>';
+    }
+
+        $(document).ready(function() {
+
+            _liveAnnouHub = $.connection.liveProductAnnoucementHub;
+
+            _liveAnnouHub.client.announcement = function(channelKey, msg) {
+
+                var pc = JSON.parse(msg);
+
+                jQuery('#' + channelKey).append(BuildReplyItem(pc));
+
+                notifySound();
+            };
+
+            $.connection.hub.start().done(function() {
+
+                for (var i = 0; i < _listChannelKey.length; i++) {
+                    _liveAnnouHub.server.registerChat(_subcriber, _listChannelKey[i]);
+                }
+            });
+
+        });
+
+    </script>
+
+
+    <audio preload='true' id='audio'>
+        <source src="~/Plugins/BadPayBad.ProductLiveChat/notifysound.mp3" type="audio/mpeg">
+    </audio>
+    <script>
+        function notifySound() {
+            var p = document.getElementById('audio');
+            p.pause();
+            p.currentTime = 0;
+            p.play();
+        }
+    </script>
+</div>

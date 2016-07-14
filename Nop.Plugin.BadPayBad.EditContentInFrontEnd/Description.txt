@@ -1,0 +1,8 @@
+﻿Group: badpaybad.info
+FriendlyName: BadPayBad.EditContentInFrontEnd
+SystemName: Nop.Plugin.BadPayBad.EditContentInFrontEnd.EditContentInFrontEndPlugin
+Version: 1.13
+SupportedVersions: 3.70
+Author: badpaybad.info
+DisplayOrder: 1
+FileName: Nop.Plugin.BadPayBad.EditContentInFrontEnd.dll 

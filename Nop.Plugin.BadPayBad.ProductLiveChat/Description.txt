@@ -1,0 +1,8 @@
+﻿Group: badpaybad.info
+FriendlyName: ProductLiveChat
+SystemName: Nop.Plugin.BadPayBad.ProductLiveChat.PluginRegister
+Version: 1.0
+SupportedVersions: 3.70
+Author: badpaybad.info
+DisplayOrder: 1
+FileName: Nop.Plugin.BadPayBad.ProductLiveChat.dll 

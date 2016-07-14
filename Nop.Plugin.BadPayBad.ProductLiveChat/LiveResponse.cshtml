@@ -1,0 +1,117 @@
+﻿@using System.Web.Script.Serialization
+@using Nop.Services.Seo
+@model Nop.Plugin.BadPayBad.ProductLiveChat.ProductCommentModel
+<link href="~/Plugins/BadPayBad.ProductLiveChat/liveResponse.css" rel="stylesheet"/>
+<script src="~/Scripts/jquery-1.10.2.min.js" type="text/javascript"></script>
+<script src="~/Plugins/BadPayBad.ProductLiveChat/jquery.signalR-2.2.0.min.js"></script>
+<script src="~/signalr/hubs"></script>
+
+<div class="product-comment-live-chat">
+    <script>
+        var _liveAnnouHub = $.connection.liveProductAnnoucementHub;
+
+        var _subcriber = 'liveResponseSubcriber_@(Model.Username + "_" + Model.ProductId)';
+
+    </script>
+
+    <div>
+        <a href="@Url.RouteUrl("Product", new {SeName = Model.ProductSeoName})"
+           target="_blank">
+            @Model.ProductName
+        </a>
+    </div>
+    <div>
+        @Model.Username @Model.CreatedDate
+    </div>
+    <div>
+        @Model.Comment
+    </div>
+    <div class="reply-list" id="commentChannelKey_@Model.Id">
+        @foreach (var r in Model.Replies)
+        {
+            <div class="reply-item">
+                <div class="reply-item-username">@r.Username @r.CreatedDate</div>
+                <div class="reply-item-comment">
+                    @r.Comment
+                </div>
+            </div>
+        }
+    </div>
+    <table class="reply-box">
+        <tr>
+            <td>
+                <textarea id="txtNewCommentReply_@Model.Id" rows="3"></textarea>
+            </td>
+            <td>
+                <input type="button" value="Post reply"
+                       onclick="DoReply('@Model.Id', '@Model.ProductId', 'txtNewCommentReply_@Model.Id')"/>
+            </td>
+        </tr>
+    </table>
+
+    <div>
+      Chating for product:  <a href="@Url.RouteUrl("Product", new {SeName = Model.ProductSeoName})"
+           target="_blank">
+            @Model.ProductName
+        </a>
+    </div>
+
+    <script>
+        function DoReply(commentId, productId, txtReplyDomId) {
+
+            var comment = $('#' + txtReplyDomId).val();
+            if (comment == '') return;
+
+            var dataComment = { ProductId: productId, Comment: comment, ParentId: commentId, Username: '@Model.Username' };
+
+            $.ajax({
+                method: "POST",
+                url: "/ProductCommentLiveChat/AddReply",
+                cache: false,
+                //dataType: "json",
+                data: dataComment
+            }).done(function (res) {
+                $('#' + txtReplyDomId).val('');
+            });
+        }
+
+        $(document).ready(function () {
+
+            _liveAnnouHub = $.connection.liveProductAnnoucementHub;
+
+            _liveAnnouHub.client.announcement = function (channelKey, msg) {
+
+                var pc = JSON.parse(msg);
+
+                jQuery('#' + channelKey).append(
+                    '<div  class="reply-item">'
+                    + '<div class="reply-item-username">' + pc.Username + ' ' + new Date(parseInt(pc.CreatedDate.substr(6))) + '</div>'
+                    + '<div class="reply-item-comment">' + pc.Comment
+                    + '</div></div>'
+                );
+
+                notifySound();
+            };
+
+            $.connection.hub.start().done(function () {
+
+                _liveAnnouHub.server.registerChat(_subcriber, 'commentChannelKey_@Model.Id');
+
+            });
+
+        });
+    </script>
+
+
+    <audio preload='true' id='audio'>
+        <source src="~/Plugins/BadPayBad.ProductLiveChat/notifysound.mp3" type="audio/mpeg">
+    </audio>
+    <script>
+        function notifySound() {
+            var p = document.getElementById('audio');
+            p.pause();
+            p.currentTime = 0;
+            p.play();
+        }
+    </script>
+</div>

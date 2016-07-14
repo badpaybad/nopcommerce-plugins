@@ -1,0 +1,8 @@
+﻿Group: badpaybad.info
+FriendlyName: SampleDataAccessPluglin
+SystemName: Nop.Plugin.BadPayBad.SampleDataAccess.SampleDataAccessPluglin
+Version: 1.13
+SupportedVersions: 3.70
+Author: badpaybad.info
+DisplayOrder: 1
+FileName: Nop.Plugin.BadPayBad.SampleDataAccess.dll 

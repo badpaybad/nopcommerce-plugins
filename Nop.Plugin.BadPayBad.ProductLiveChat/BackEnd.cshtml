@@ -1,0 +1,129 @@
+﻿@using System.Web.Script.Serialization
+@model Nop.Plugin.BadPayBad.ProductLiveChat.BackEndModel
+<link href="~/Plugins/BadPayBad.ProductLiveChat/jquery.m.toast.css" rel="stylesheet" />
+<link href="~/Plugins/BadPayBad.ProductLiveChat/liveResponse.css" rel="stylesheet" />
+<script src="~/Plugins/BadPayBad.ProductLiveChat/jquery.m.toast.js"></script>
+<script src="~/Plugins/BadPayBad.ProductLiveChat/jquery.signalR-2.2.0.min.js"></script>
+<script src="~/signalr/hubs"></script>
+
+
+<div class="product-comment-live-chat backend">
+    <script>
+        var _liveAnnouHub = $.connection.liveProductAnnoucementHub;
+
+        var _subcriber = 'backEndSubcriber_@(Model.Username + "_" + Model.ChannelKeyLiveResponse)';
+
+        var _liveComments = [];
+
+    </script>
+    <table width="100%">
+        <tr>
+            <td width="30%">
+                <div id="newLiveProductComment">
+                    @foreach (var r in Model.Last10Comments)
+                    {
+                        <div class="reply-item">
+                            <h3>Product: @r.ProductName</h3>
+                            <div class="reply-item-username">@r.Username @r.CreatedDate</div>
+                            <div class="reply-item-comment">
+                                @r.Comment
+                                <a href="javascript:void(0)" onclick="OpenLiveResponse(@r.Id)">Go to chat</a>
+                            </div>
+                        </div>
+
+                        <script>
+                            _liveComments[@r.Id] = JSON.parse('@Html.Raw(new JavaScriptSerializer().Serialize(r))');
+                        </script>
+                    }
+                </div>
+            </td>
+            <td width="70%">
+                <div id="currentChat"></div>
+                <iframe id="iframeLiveResponse" src="" width="600px" height="500px;"></iframe>
+            </td>
+        </tr>
+    </table>
+
+    <script>
+
+        function OpenLiveResponse(commentId) {
+
+            $('#iframeLiveResponse').attr('src', '/ProductCommentLiveChat/LiveResponse/?commentId=' + commentId);
+
+            var pc = _liveComments[commentId];
+            if(pc && pc.Username){
+                var currentChannel = BuilDisplayProductComment(pc);
+
+                $('#currentChat').html(currentChannel);
+            }
+           
+            setTimeout(function() {
+                var $contents = $('#iframeLiveResponse').contents();
+                $contents.scrollTop($contents.height() + 100);
+            }, 2000);
+        }
+
+        function BuilDisplayProductComment(pc) {
+            var currentChannel = '<div  class="reply-item">'
+                 +'<h3>' +'Product: '+ pc.ProductName +'</h3>'
+                 + '<div class="reply-item-username">' + pc.Username + ' ' + new Date(parseInt(pc.CreatedDate.substr(6))) + '</div>'
+                 + '<div class="reply-item-comment">' + pc.Comment
+                 +
+                 '<a href="javascript:void(0)" onclick="OpenLiveResponse(' + pc.Id + ')" >Go to chat</a>' 
+                 +'</div>';
+
+            return currentChannel;
+        }
+
+        $(document).ready(function () {
+
+            _liveAnnouHub = $.connection.liveProductAnnoucementHub;
+
+            _liveAnnouHub.client.liveResponseAnnouncement = function (channelKey, msg) {
+
+                var pc = JSON.parse(msg);
+
+                var currentChannel = BuilDisplayProductComment(pc);
+                
+                $.toast(currentChannel, { 'duration': 5000, 'width': 500 });
+
+                notifySound();
+
+                var $contents = $('#iframeLiveResponse').contents();
+                $contents.scrollTop($contents.height()+100);
+
+                for (var i = 0; i < _liveComments.length; i++) {
+                    if ( _liveComments[i] && _liveComments[i].Id == pc.Id) return;
+                }
+
+                _liveComments[pc.Id] = pc;
+
+                jQuery('#newLiveProductComment').append(
+                    currentChannel
+                );
+
+            };
+
+            $.connection.hub.start().done(function () {
+
+                _liveAnnouHub.server.registerLiveResponse(_subcriber);
+
+            });
+
+        });
+
+    </script>
+
+
+    <audio preload='true' id='audio'>
+        <source src="~/Plugins/BadPayBad.ProductLiveChat/notifysound.mp3" type="audio/mpeg">
+    </audio>
+    <script>
+        function notifySound() {
+            var p = document.getElementById('audio');
+            p.pause();
+            p.currentTime = 0;
+            p.play();
+        }
+    </script>
+</div>

@@ -1,0 +1,37 @@
+﻿@using Nop.Admin.Models.Catalog
+@using Nop.Plugin.BadPayBad.SampleDataAccess
+@using Nop.Web.Framework
+@model  Nop.Plugin.BadPayBad.SampleDataAccess.SampleBackEndModel
+
+Backend
+
+
+@using (Html.BeginForm())
+{
+    @Html.HiddenFor(model => model.Id)
+    <div>
+        @(Html.LocalizedEditor<SampleBackEndModel, SampleBackEndLocalizeModel>("product-info-localized",
+    @<div class="adminContent">
+        <div>Name</div>
+        <div>@Html.EditorFor(model => model.Locales[item].Name, "RichEditor")</div>
+        <div>Version</div>
+        <div>@Html.EditorFor(model => model.Locales[item].Version)</div>
+         @Html.HiddenFor(model => model.Locales[item].LanguageId)
+    </div>
+                ,
+    @<div class="adminContent">
+        <div>Name</div>
+        <div>
+            @Html.EditorFor(x => x.Name, "RichEditor")
+        </div>
+        <div>Version</div>
+        <div>
+            @Html.EditorFor(model => model.Version):
+        </div>
+    </div>
+      ))
+    </div>
+
+    <input type="submit" value="Save 1st Records"/>
+    @Html.AntiForgeryToken()
+}
